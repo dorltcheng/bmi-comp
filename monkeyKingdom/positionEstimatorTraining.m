@@ -102,6 +102,37 @@ function [modelParameters] = positionEstimatorTraining(training_data)
   modelParameters.svmModel = svmModels; % saved all 4 trained svm models 
   
   % Kalman filtering training
+  
+  
+  [nb_trials,nb_angles]=size(training_data);
+
+
+for idx_angle=1:nb_angles
+    max_val=1000;
+    l=[];
+    X_av=zeros(nb_trials,max_val);
+    Y_av=zeros(nb_trials,max_val);
+    Z_av=zeros(nb_trials,max_val);
+
+    for idx_trial=1:nb_trials
+        l=[l, length(training_data(idx_trial,idx_angle).handPos(1,:))];
+        X_av(idx_trial,1:l(end))=training_data(idx_trial,idx_angle).handPos(1,:);
+        Y_av(idx_trial,1:l(end))=training_data(idx_trial,idx_angle).handPos(2,:);
+    end
+
+    duration=min(l);
+    Tstart=320;
+    Tstop=duration;
+
+    X_av=sum(X_av(:,Tstart:Tstop),1)*(1/nb_trials);
+    Y_av=sum(Y_av(:,Tstart:Tstop),1)*(1/nb_trials);
+    Z_av=sum(Z_av(:,Tstart:Tstop),1)*(1/nb_trials);
+
+    traj=cat(1,X_av,Y_av,Z_av);
+
+    modelParameters.X{idx_angle}= traj(1,:);
+    modelParameters.Y{idx_angle}= traj(2,:);
+end
       
         
   
