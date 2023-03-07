@@ -160,7 +160,30 @@ function [newModelParameters] = positionEstimator(test_data, modelParameters)
         newModelParameters.dirPrediction = y_pred;
     end
 
-    % Kalman filtering (from y_pred)
+    
+
+    X=modelParameters.X{y_pred};
+    Y=modelParameters.Y{y_pred};
+
+    Tstart=320;
+    lag=20;
+
+    % Get firing rate of neurons from dataset
+
+    k=(length(test_data.spikes)-Tstart)/lag;
+    if k==0
+        test_data.decodedHandPos = [];
+        x=0;
+        y=0;
+    else
+        if k*lag>length(X)
+            disp('Not enough training data to predict for this time');
+        else
+        test_data.decodedHandPos = [X(k),Y(k)];
+        x=X(k);
+        y=Y(k);
+        end
+    end
     
     
     
