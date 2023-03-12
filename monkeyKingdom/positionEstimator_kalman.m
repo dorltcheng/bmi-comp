@@ -1,6 +1,6 @@
 
 % function [x, y, newModelParameters] = positionEstimator(test_data, modelParameters)
-function [x, y, newModelParameters] = positionEstimator(test_data, modelParameters)
+function [x, y, newModelParameters] = positionEstimator_kalman(test_data, modelParameters)
 
     % **********************************************************
     %
@@ -71,10 +71,6 @@ function [x, y, newModelParameters] = positionEstimator(test_data, modelParamete
         svmPreds = zeros(4, 1);
         for numSvm = 1:4
             pred = predict(modelParameters.svmModel{numSvm}, X_test);
-            
-%       Or use NBNG's model but no need:
-%             pred = svmPredict(modelParameters.svmModel{numSvm}, X_test); % y_pred = 0 or 1
-
             svmPreds(numSvm) = pred;
         end
 
