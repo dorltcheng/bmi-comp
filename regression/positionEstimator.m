@@ -1,4 +1,4 @@
-function [x, y, newModelParameters] = positionEstimator(test_data, modelParameters)
+function [x, y, newModelParameters] = positionEstimator_regression(test_data, modelParameters)
     newModelParameters = modelParameters; % use newModelParameters to update below
     
     %% SVM Prediction of Direction
@@ -105,31 +105,31 @@ function [x, y, newModelParameters] = positionEstimator(test_data, modelParamete
 
     %% Linear regression for trajectory prediction
     
-    direction = newModelParameters(1).direction;
+    direction = newModelParameters.direction;
     selected_neurons = newModelParameters.selectedNeurons; % get selected neurons from training for prediction
     
     t_lag = 20;
     t_min = t_total - t_lag;
     
-    % firing rate
+    % calculate the firing rates
     firingRates = zeros(length(selected_neurons), 1);
     for n = 1:length(selected_neurons)
         num_spikes = length(find(test_data.spikes(selected_neurons(n), t_min:t_total)==1));
         firingRates(n) = num_spikes/(t_lag);
     end
     
-    % velocity estimation 
-    v_x = firingRates' * newModelParameters.regres{direction}(:, 1);
-    v_y = firingRates' * newModelParameters.regres{direction}(:, 2);
+    % velocity estimation from trained regression model parameters
+    v_x = firingRates' * newModelParameters.regres{direction}(:, 1); % x
+    v_y = firingRates' * newModelParameters.regres{direction}(:, 2); % y
     
     % trajectory estimation
-    if t_total <= 320
+    if t_total == 320 % if start of trajectory - start handpos
         x = test_data.startHandPos(1);
         y = test_data.startHandPos(2);
         
-    else % calculate position from velocity 
-        x = test_data.decodedHandPos(1,length(test_data.decodedHandPos(1,:))) + v_x * (t_lag);
-        y = test_data.decodedHandPos(2,length(test_data.decodedHandPos(2,:))) + v_y * (t_lag);
+    else % calculate position from velocity
+        x = test_data.decodedHandPos(1,length(test_data.decodedHandPos(1,:))) + v_x * (t_lag); % get current x from adding previous decoded pos + v*t
+        y = test_data.decodedHandPos(2,length(test_data.decodedHandPos(2,:))) + v_y * (t_lag); % get current y from adding previous decoded pos + v*t
     end
     
     
