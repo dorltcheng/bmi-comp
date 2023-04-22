@@ -1,6 +1,6 @@
 %%% Team Members: Coraline Beitone, Dorothy Cheng, Marco Cheng
 
-function [modelParameters, firingRates, velocities] = positionEstimatorTraining(training_data)
+function [modelParameters, firingRates, velocities] = positionEstimatorTraining_regression2(training_data)
 
     svmTrainDs = {};
 
@@ -50,139 +50,83 @@ function [modelParameters, firingRates, velocities] = positionEstimatorTraining(
     modelParameters.svmModel = svmModels; % saved all 4 trained svm models 
 
     
-%% Linear Regression
+%% Regression
     
 % parameters definition
-    selected_neurons = 1:98; % work best for regression 
+    selected_neurons = 1:98; 
 %     selected_neurons = [85,87,89,55,58,41,40,22,27,28,29,3,66,68];
 %     selected_neurons = [4,14,18,29,34,36,48,55,67,68,75,77];
 %     selected_neurons = [3,7,23,27,28,29,40,41,55,58,61,66,67,68,85,87,88,89,96,98];
     
     t_lag = 20; % time window 20ms
-    t_max = 550;
+    t_max = 570; % max traj length
+    
+    firingRates = {};
+    velocities = {};
+            
 
+    for dir = 1:numDir % for every direction
+        x_Vs = []; % save all x velocities in one direction for all neurons
+        y_Vs = []; % save all y velocities in one direction for all neurons
 
-  % Get velocity and firing rates
-    firingRates = struct([]);
-    velocities = struct([]);
-
-    for dir = 1:numDir
-        xVel = [];
-        yVel = [];
-
-        for n = 1:length(selected_neurons)
-            fRates = [];
-            for tr = 1:numTrial
-                spikeR = [];
-                for t = 320:t_lag:t_max - t_lag
-                    num_spikes = length(find(training_data(tr, dir).spikes(selected_neurons(n), t:t+t_lag)==1));
-                    spikeR = cat(2, spikeR, num_spikes/(t_lag));
+        for n = 1:length(selected_neurons) % for every neuron
+            fRates = []; % store all firing rates for one neuron over all trials
+            
+            for tr = 1:numTrial % for every trial 
+                fRate_trial = []; % save the firing rate of one single trial
+                
+                for t = 320:t_lag:t_max - t_lag % for every time bin (20ms)
                     
+                    % Calculate velocity once only for every trial  
                     if n == 1
-                        x_t = training_data(tr, dir).handPos(1, t);
-                        x_dt = training_data(tr, dir).handPos(1, t+t_lag);
-                        y_t = training_data(tr, dir).handPos(2, t);
-                        y_dt = training_data(tr, dir).handPos(2, t+t_lag);
+                        x = training_data(tr, dir).handPos(1, t);
+                        x_next = training_data(tr, dir).handPos(1, t + t_lag);
+                        vel_x = (x_next - x)/(t_lag);
                         
-                        vel_x = (x_dt - x_t)/(t_lag);
-                        vel_y = (y_dt - y_t)/(t_lag);
-                        xVel = cat(2, xVel, vel_x);
-                        yVel = cat(2, yVel, vel_y);
+                        y = training_data(tr, dir).handPos(2, t);
+                        y_next = training_data(tr, dir).handPos(2, t + t_lag);
+                        vel_y = (y_next - y)/(t_lag);
+                        
+                        x_Vs = cat(2, x_Vs, vel_x);
+                        y_Vs = cat(2, y_Vs, vel_y);
                     end
+                    
+                    % Calculate spike rate at each time bin
+                    num_spikes = length(find(training_data(tr, dir).spikes(selected_neurons(n), t:t + t_lag)==1));
+                    fRate_trial = cat(2, fRate_trial, num_spikes/(t_lag));
+                    
                 end
-                fRates = cat(2, fRates, spikeR);
+                fRates = cat(2, fRates, fRate_trial);
                 
             end
             firingRates(n, dir).frate = fRates;
-            velocities(dir).x = xVel;
-            velocities(dir).y = yVel;
             
-            
+            velocities(dir).x = x_Vs;
+            velocities(dir).y = y_Vs;
         end
-      
+        
     end
             
+                
     
-% Linear Regression with least square method 
+%% Linear Regression training
     regres = {};
     
     for dir = 1:numDir
-        vel = [velocities(dir).x; velocities(dir).y];
+        velocity = [velocities(dir).x; velocities(dir).y]; 
         
         firingR = [];
         for n = 1:length(selected_neurons)
             firingR = cat(1, firingR, firingRates(n, dir).frate);
         end
         
-        disp(num2str(size(vel)));
-        disp(num2str(size(firingR)));
+%         disp(num2str(size(velocity)));
+%         disp(num2str(size(firingR)));
         
-        regres{dir} = lsqminnorm(firingR', vel');
+        regres{dir} = lsqminnorm(firingR', velocity');
     end
     
     modelParameters.regres = regres;
     modelParameters.selectedNeurons = selected_neurons;
 end
-
-
-
-%% wrong codes
-%     function [vel] = get_vel(trainData, t_lag, nTrial, nDir)
-%         length_spikes = 550;
-%         numBin = floor((length_spikes - 320) / t_lag);
-%         
-%         pos = zeros(2, numBin + 1); % for x,y
-%         vel = zeros(2, numBin + 1);
-%         
-%         % x, y, v_x, v_y
-%         bin = 320 + (0: t_lag: numBin*t_lag);
-%         pos(1, :) = trainData(nTrial, nDir).handPos(1, bin); % x
-%         pos(2, :) = trainData(nTrial, nDir).handPos(2, bin); % y
-%         
-%         vel(1, 1:numBin) = diff(pos(1, :)) / t_lag; % v_x
-%         vel(2, 1:numBin) = diff(pos(2, :)) / t_lag; % v_y
-%         
-%         vel = vel(:, 1:numBin);
-%     end
-% 
-%     function [frate] = get_firingRate(trainData, neuron, t_lag, nTrial, nDir)
-%         length_spike = 550;    
-% %         firingRate = [];
-%         
-%         frate = [];
-%         for t = 320:t_lag:length_spike - t_lag
-%             num_spikes = length(find(trainData(nTrial, nDir).spikes(neuron, t:t+t_lag)==1));
-%             frate = cat(2, frate, num_spikes/(t_lag*0.001));
-%         end
-% %         firingRate = cat(2, firingRate, frate); 
-%         
-%     end
-% 
-% 
-%     firingRates = struct([]);
-%     velocities = struct([]);
-%     
-%     for dir = 1:numDir
-%         vels = [];
-%         for tr = 1:numTrial
-%             vel = get_vel(training_data, t_lag, tr, dir);
-%             vels = cat(2, vels, vel);
-%         end
-%         velocities(dir).x = vels(1, :);
-%         velocities(dir).y = vels(2, :);
-%     end
-%     
-%     for dir = 1:numDir
-%         for n = 1:length(selected_neurons)
-%             fRates = [];
-%             for tr = 1:numTrial
-%                 spikeR = get_firingRate(training_data, selected_neurons(n), t_lag, tr, dir);
-%                 fRates = cat(2, fRates, spikeR);
-%             end
-%             
-%             firingRates(n, dir).frate = fRates;
-%         end
-%     end
-
-
 
