@@ -19,17 +19,12 @@ function [x, y, newModelParameters] = positionEstimator_kalman(test_data, modelP
     else % if t_total == 320 (need svm)
         svmPreds = zeros(4, 1);
         for numSvm = 1:4
-            pred = predict(modelParameters.svmModel{numSvm}, X_test);
+            pred = SVMPred(modelParameters.svmModel{numSvm}, X_test);
             svmPreds(numSvm) = pred;
         end
 
         % determine the class
-        
-        %     combos:  [1,2,3,4; 5,6,7,8;
-        %               2,3,4,5; 6,7,8,1;
-        %               3,4,5,6; 7,8,1,2;
-        %               4,5,6,7; 8,1,2,3];
-        
+                
         if svmPreds(1) == 0
             if svmPreds(2) == 0
                 if svmPreds(3) == 0
@@ -128,7 +123,6 @@ function [x, y, newModelParameters] = positionEstimator_kalman(test_data, modelP
     
     prev_state = newModelParameters.state{direction}; % get previous state saved
  
-    
     end_t = size(test_data.spikes, 2); 
     
     t_lag = 20;
