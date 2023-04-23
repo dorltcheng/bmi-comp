@@ -1,6 +1,6 @@
 %%% Team Members: Coraline Beitone, Dorothy Cheng, Marco Cheng
 
-function [modelParameters] = positionEstimatorTraining_kalman(training_data)
+function [modelParameters] = positionEstimatorTraining_kalmanNEW(training_data)
   % Arguments:
   
   % - training_data:
@@ -56,7 +56,7 @@ function [modelParameters] = positionEstimatorTraining_kalman(training_data)
       y_train_b = ones(size(training_data, 1)*4, 1);
       y_train = vertcat(y_train_a, y_train_b); % 640x1 
 
-      svm = fitcsvm(X_train, y_train, 'KernelFunction', 'gaussian', 'Standardize', true, 'KernelScale','auto'); % kernelfunction: 'gaussian' or 'rbf'
+      svm = SVM(X_train, y_train, @rbfKernel, 20, 0.01, 500);
       
       svmModels{numSvm} = svm;    
       
@@ -75,10 +75,7 @@ function [modelParameters] = positionEstimatorTraining_kalman(training_data)
     
     t_lag = 20; % time window 20ms
     numState = 4; % number of states (x, y, v_x, v_y) - hand movements = system states
-    
-    % numTrials - number of trials (80)
-    % numDir - number of directions (8) 
-    
+
     
     %% function: get state function (x)
     function state = get_state(trainData, t_lag, nTrial, nDir, numState)
