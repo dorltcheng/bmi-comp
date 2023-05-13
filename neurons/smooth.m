@@ -1,3 +1,4 @@
+% Code reference: https://goldmanlab.faculty.ucdavis.edu/tutorials/
 function [c,ww] = smooth(varargin)
 %SMOOTH  Smooth data.
 %   Z = SMOOTH(Y) smooths data Y using a 5-point moving average.
