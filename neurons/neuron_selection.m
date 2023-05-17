@@ -5,7 +5,7 @@ load('monkeydata_training.mat');
 
 numTrial = 100;
 numDir = 1:2; % change the range for different direction (1:8)
-numNeuron = 91:98; % change the range for different neurons (1:98)
+numNeuron = 1:10; % change the range for different neurons (1:98)
 
 time = 1:550;
 
@@ -25,7 +25,9 @@ for n = numNeuron
             hold on;
         end
         line([320, 320], ylim, 'Color', 'k', 'LineWidth', 1);
+        title(['Neuron ', num2str(n), ', Angle ', num2str(dir)]);
         hold on;
+        
         % Average firing rate plot
         smooth_counts = smooth(counts_sum, smoothWidth);
         plot(time, smooth_counts * 1000 / (100 * dt), 'LineWidth', 2);
