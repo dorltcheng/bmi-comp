@@ -15,8 +15,8 @@ ix = randperm(length(trial));
 addpath(teamName);
 
 % Select training and testing data (you can choose to split your data in a different way if you wish)
-trainingData = trial(ix(1:50),:);
-testData = trial(ix(51:end),:);
+trainingData = trial(ix(1:80),:);
+testData = trial(ix(81:end),:);
 
 fprintf('Testing the continuous position estimator...')
 
@@ -29,7 +29,8 @@ axis square
 grid
 
 % Train Model
-modelParameters = positionEstimatorTraining_kalmanNEW(trainingData);
+tic;
+modelParameters = positionEstimatorTraining(trainingData);
 
 for tr=1:size(testData,1)
     display(['Decoding block ',num2str(tr),' out of ',num2str(size(testData,1))]);
@@ -46,11 +47,11 @@ for tr=1:size(testData,1)
 
             past_current_trial.startHandPos = testData(tr,direc).handPos(1:2,1); 
             
-            if nargout('positionEstimator_kalmanNEW') == 3
-                [decodedPosX, decodedPosY, newParameters] = positionEstimator_kalmanNEW(past_current_trial, modelParameters);
+            if nargout('positionEstimator') == 3
+                [decodedPosX, decodedPosY, newParameters] = positionEstimator(past_current_trial, modelParameters);
                 modelParameters = newParameters;
-            elseif nargout('positionEstimator_kalmanNEW') == 2
-                [decodedPosX, decodedPosY] = positionEstimator_kalmanNEW(past_current_trial, modelParameters);
+            elseif nargout('positionEstimator') == 2
+                [decodedPosX, decodedPosY] = positionEstimator(past_current_trial, modelParameters);
             end
             
             decodedPos = [decodedPosX; decodedPosY];
@@ -63,12 +64,18 @@ for tr=1:size(testData,1)
         hold on
         plot(decodedHandPos(1,:),decodedHandPos(2,:), 'r');
         plot(testData(tr,direc).handPos(1,times),testData(tr,direc).handPos(2,times),'b')
+        title('Trajectory Prediction')
+        xlabel('x')
+        ylabel('y')
+  
     end
 end
 
 legend('Decoded Position', 'Actual Position')
 
-RMSE = sqrt(meanSqError/n_predictions) 
+RMSE = sqrt(meanSqError/n_predictions);
+elapsedTime = toc;
+disp(['Elapsed time: ' num2str(elapsedTime) ' seconds']);
 
 rmpath(genpath(teamName))
 
