@@ -1,5 +1,5 @@
 %%% Team Members: Coraline Beitone, Dorothy Cheng, Marco Cheng
-%%% METHOD: SVMs + Averaging
+%%% METHOD: SVMs + Kalman Filtering
 
 function [modelParameters] = positionEstimatorTraining(training_data)
   % Arguments:
