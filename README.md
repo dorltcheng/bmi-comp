@@ -5,4 +5,4 @@ We implement three different trajectory decoding methods: Averaging Estimation (
 
 * Averaging Estimation: `testFunction_for_students_MTb('averaging')`
 * Kalman Filtering: `testFunction_for_students_MTb('kalman')`
-* Kalman Filtering: `testFunction_for_students_MTb('regression')`
+* Linear Regression: `testFunction_for_students_MTb('regression')`
